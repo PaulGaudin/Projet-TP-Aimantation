@@ -6,16 +6,16 @@ from scipy import optimize
 from scipy import odr
 
 #Conversion des , en . pour pouvoir récupérer les données
-f = open('Godolinium6.txt','r')
+f = open('Data/GadSulfOctH.txt','r')
 filedata = f.read()
 f.close()
 newdata = filedata.replace(",",".")
-f = open('Godolinium6.txt','w')
+f = open('Data/GadSulfOctH.txt','w')
 f.write(newdata)
 f.close()
 
 #Chargement des données
-l=np.loadtxt('Godolinium6.txt')
+l=np.loadtxt('Data/GadSulfOctH.txt')
 l[:,0]*=1e-9
 
 #Creation d'un fit par une loi affine (Cf ...)

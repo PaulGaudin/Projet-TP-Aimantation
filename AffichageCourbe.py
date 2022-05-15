@@ -7,17 +7,17 @@ from scipy import odr
 
 kb=1.380649e-23
 #Conversion des , en . pour pouvoir récupérer les données
-f = open('Data.txt','r')
+f = open('Calib_H.txt','r')
 filedata = f.read()
 f.close()
 newdata = filedata.replace(",",".")
-f = open('Data.txt','w')
+f = open('Calib_H.txt','w')
 f.write(newdata)
 f.close()
 
 
 #Récupération des données de callibrage de la hauteur en fonction de la tension mesurée
-l=np.loadtxt('Data.txt')
+l=np.loadtxt('Calib_H.txt')
 
 
 plt.figure(figsize=(16,14)) #was plt.subplot(2,2,1)
@@ -32,27 +32,28 @@ def fit():
 
 a,b=fit()
 #Affichage de la courbe et de son fit
-plt.plot(l[:,1],l[:,0],'+',label='S1')
+plt.plot(l[:,1],l[:,0],'+')
 plt.errorbar(l[:,1],l[:,0],xerr=0.00025,yerr=0.01,fmt='+')
 plt.plot(l[:,1],a*l[:,1]+b,label='Fit')
 plt.title("Tension mesurée en fonction de la hauteur de l'échantillon")
 print(f"a= {a}, b = {b}\n")
+plt.xlabel('Hauteur (m)')
+plt.ylabel('Tension (V)')
 plt.legend()
 
 
 #Transformation et récupération des données de callibrage du champ en fonction de la hauteur
-f = open('Donnees_Calib_B6.txt','r')
+f = open('Donnees_Calib.txt','r')
 filedata = f.read()
 f.close()
 newdata = filedata.replace(",",".")
-f = open('Donnees_Calib_B6.txt','w')
+f = open('Donnees_Calib.txt','w')
 f.write(newdata)
 f.close()
 
-l=np.loadtxt('Donnees_Calib_B6.txt')
+l=np.loadtxt('Donnees_Calib.txt')
 l[:,0]*=1e-3
 nbmesures=159
-
 plt.subplot(1,2,2)
 
 #Création de la fonction de fit des points
@@ -72,6 +73,9 @@ plt.plot(l[:,1],B0*((l[:,1]-z1)/pow((pow(l[:,1]-z1,2)+pow(R,2)),0.5)-(l[:,1]-z2)
 plt.title(f"Champ mesuré en fonction de la hauteur")
 print(f"B0 = {B0}, z1 = {z1}, z2 = {z2}, R = {R}\n")
 plt.yscale("log")
+plt.grid(True, which='both')
+plt.xlabel('Hauteur (cm)')
+plt.ylabel('Champ B (T)')
 plt.legend()
 
 

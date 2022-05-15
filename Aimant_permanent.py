@@ -6,16 +6,16 @@ from scipy import optimize
 from scipy import odr
 
 #On commence par ouvrir le fichier contenant l'aimantation de l'aimant permanent en fonction de la position et on change les virgules en point afin que les données soient lisibles par python
-f = open('Nuage3.txt','r')
+f = open('Data/AimantPermanent.txt','r')
 filedata = f.read()
 f.close()
 newdata = filedata.replace(",",".")
-f = open('Nuage3.txt','w')
+f = open('Data/AimantPermanent.txt','w')
 f.write(newdata)
 f.close()
 
 #Enfin, on charge les données de ce fichier dans un tableau
-l=np.loadtxt('Nuage3.txt')
+l=np.loadtxt('Data/AimantPermanent.txt')
 l[:,0]*=1e-9
 
 #On défini la dérivée de B par rapport a z, avec les paramètres déterminé par le callibrage du champ B en fonction de la position précédemment déterminé
@@ -48,11 +48,15 @@ p, cv = optimize.curve_fit(fitfunc,l[:,1],l[:,0],p0)
 print(p)
 
 #Enfin, on affiche les points corrigés ainsi que le fit réalisé
-plt.figure()
+plt.figure(figsize=(16,14))
 plt.errorbar(l[:,1],l[:,0],yerr=0,fmt='+')
-plt.plot(l[:,1],fitfunc(l[:,1],p[0],p[1],p[2],p[3],p[4],p[5],p[6]))
+plt.plot(l[:,1],fitfunc(l[:,1],p[0],p[1],p[2],p[3],p[4],p[5],p[6]),label='fit')
+plt.title('Aimantation en fonction de la hauteur')
+plt.xlabel('hauteur (cm)')
+plt.ylabel('Aimantation (A/m)')
+plt.legend()
 plt.show()
 
-f = open('Modele_A.txt','w')
+f = open('Data/Modele_A.txt','w')
 f.write(f'{p[0]} {p[1]} {p[2]} {p[3]} {p[4]} {p[5]} {p[6]}')
 f.close()

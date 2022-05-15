@@ -6,16 +6,16 @@ from scipy import optimize
 from scipy import odr
 
 #Conversion des , en . pour pouvoir récupérer les données
-f = open('Etalonnage.txt','r')
+f = open('Data/EtalonnageH.txt','r')
 filedata = f.read()
 f.close()
 newdata = filedata.replace(",",".")
-f = open('Etalonnage.txt','w')
+f = open('Data/EtalonnageH.txt','w')
 f.write(newdata)
 f.close()
 
 #Récupération de la température en fonction de R(T)/R(0°C)
-l=np.loadtxt('Etalonnage.txt')
+l=np.loadtxt('Data/EtalonnageH.txt')
 
 #Creation et paramétrisation de la fonction de fit
 def fitfunc(T,a,b,c):
@@ -58,6 +58,6 @@ p0=(1,1,1)
 p, cv = optimize.curve_fit(fitfunc,A,l[:,0],p0)
 
 #Enfin, on écrit les paramètre de notre modèle final de T(R) dans un fichier pour une utilisation dans d'autre programmes.
-f = open('Modele_T.txt','w')
+f = open('Data/Modele_T.txt','w')
 f.write(f'{p[0]} {p[1]} {p[2]}')
 f.close()
