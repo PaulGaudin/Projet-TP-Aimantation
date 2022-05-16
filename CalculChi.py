@@ -5,22 +5,12 @@ from scipy import optimize
 from scipy import odr
 from decimal import Decimal
 
+#On utilise ce programme uniquement pour calculer la susceptibilité magnétique du laiton, car le tableau de valeur est incomplet pour ce matériau
+
 mu0=1.2566e-6
-#Conversion des , en . pour pouvoir récupérer les données
-f = open('Data/GadSulfOctH.txt','r')
-filedata = f.read()
-f.close()
-newdata = filedata.replace(",",".")
-f = open('Data/GadSulfOctH.txt','w')
-f.write(newdata)
-f.close()
 
-l=np.loadtxt('Data/GadSulfOctH.txt')
-l[:,0]*=1e-9
+l=np.loadtxt('Data/laiton.txt')
 
-p2=np.loadtxt(f'Data/Modele_A.txt')
-
-#Creation de la fonction permettant de calculer Chi en fonction de z
 def B(z):
     B0=56.190
     z1=-0.59179
@@ -28,55 +18,39 @@ def B(z):
     R=1.4938
     return B0*((z-z1)/pow((pow(z-z1,2)+pow(R,2)),0.5)-(z-z2)/pow((pow(z-z2,2)+pow(R,2)),0.5))*1e-3
 
+Field=B(l[:,1])
 
-def func(z,M,B):
+A=l[:,0]*mu0*1e-11
 
-    return mu0*M/B(z)*(mu0*M/B(z)+1)
+#Creation d'un fit par une loi affine et ajutsement des points par la courbe de l'iamant permanent (Cf ...)
+def fitfunc(z,b,a):
+    return a+b*z
 
-#Creation d'une fonction de fit, et determination de ses paramètres
-def fitfunc(z,a,b,c,d,e,f,g):
+p2=np.loadtxt(f'Data/Modele_A.txt')
+
+def fitfunc2(z,a,b,c,d,e,f,g):
     return a + b*z + c*z*z + d*z*z*z + e*z*z*z*z + f*z*z*z*z*z + g*pow(z,0.5)
 
-def fitfunc2(z,a,b):
-    return z*a+b
-
-p0=(1,1,1,1,1,1,1)
-p, cv = optimize.curve_fit(fitfunc,l[:,1],l[:,0],p0)
-
-#Creation d'une fonction corrigeant les valeurs de l'aimantation obtenues par celles obtenues pour l'aimant permanent (Cf ...)
 def finalfunc(z,p,p2):
-    return 1e5*fitfunc(z,p[0],p[1],p[2],p[3],p[4],p[5],p[6])/fitfunc(z,p2[0],p2[1],p2[2],p2[3],p2[4],p2[5],p2[6])
-
-#Affichages des courbes obtenues
-
-plt.figure(figsize=(16,14))
-plt.subplot(1,2,1)
-plt.plot(l[:,1],fitfunc(l[:,1],p[0],p[1],p[2],p[3],p[4],p[5],p[6]),label='Fit')
-plt.plot(l[:,1],finalfunc(l[:,1],p,p2),label='Fit corrigé')
-plt.errorbar(l[:,1],l[:,0],fmt='+')
-plt.title('Aimantation en fonction de la hauteur')
-plt.xlabel('Hauteur (cm)')
-plt.ylabel('Aimantation (A/m)')
-plt.legend()
-
-plt.subplot(1,2,2)
-
-#Creation d'une fonction corrigeant les valeurs de Xm obtenues 
+    return 1e5*fitfunc(z,p[0],p[1])/fitfunc2(z,p2[0],p2[1],p2[2],p2[3],p2[4],p2[5],p2[6])
 
 p0=(1,1)
-p3, cv = optimize.curve_fit(fitfunc2,l[:,1],func(l[:,1],l[:,0],B),p0)
-p4, cv = optimize.curve_fit(fitfunc2,l[:,1],func(l[:,1],finalfunc(l[:,1],p,p2),B),p0)
+p, cv = optimize.curve_fit(fitfunc,Field,A,p0,maxfev=10000)
+print(f"Chi = {p[0]}")
 
-def finalfunc2(z,p,p2):
-    return 1e5*fitfunc2(z,p[0],p[1])/fitfunc(z,p2[0],p2[1],p2[2],p2[3],p2[4],p2[5],p2[6])
+p0=(1,1)
+p3, cv = optimize.curve_fit(fitfunc,Field,A*1e5/fitfunc2(Field,p2[0],p2[1],p2[2],p2[3],p2[4],p2[5],p2[6]),p0,maxfev=10000)
+print(f"Chi corrigé = {p3[0]}")
 
-#Affichage des courbes
+#Affichage des données et du plot pour vérification de la qualité de ce dernier et de la dispersion des points
+plt.figure(figsize=(16,14))
+plt.plot(Field,fitfunc(Field,p[0],p[1]),label='Fit')
 
-plt.errorbar(l[:,1],func(l[:,1],l[:,0],B),fmt='+')
-plt.plot(l[:,1],fitfunc2(l[:,1],p3[0],p3[1]),label='Fit')
-plt.plot(l[:,1],fitfunc2(l[:,1],p4[0],p4[1]),label='Fit corrigé')
-plt.title('Susceptibilité magnétique en fonction de la hauteur')
-plt.xlabel('Hauteur (cm)')
-plt.ylabel('Suscéptibilité magnétique')
+plt.errorbar(Field,A,fmt='+',yerr=2e-2*A,label='Points')
+plt.errorbar(Field,A*1e5/fitfunc2(Field,p2[0],p2[1],p2[2],p2[3],p2[4],p2[5],p2[6]),fmt='+',yerr=2e-2*A,label='Points corrigées')
+plt.plot(Field,fitfunc(Field,p3[0],p3[1]),label='Fit corrigé')
+plt.xlabel('Champ magnétique (T)')
+plt.ylabel('Aimantation*mu0 (T)')
+plt.title("Aimantation multipliée par mu0 en fonction du champ magnétique")
 plt.legend()
 plt.show()
